@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" assembly="BankingProjectMVC" namespace="BankingProjectMVC.Models">
+	<class name="Account">
+		<id name ="Id">
+			<generator class="native"/>
+		</id>
+		<property name="AccountNo"/>
+		<many-to-one name="AccountType" column="AccountTypeId" cascade="save-update"/>
+		<!--<component name="Address">
+			<property name="Street"/>
+			<property name="City"/>
+			<property name="State"/>
+		</component>-->
+		<property name="Balance"/>
+		<many-to-one name="Customer" column="CustomerId" cascade="save-update"/>
+		<!--<property name="AccountType"/>-->
+		<set name="Transactions" table="`Transaction`" cascade="all-delete-orphan">
+			<key column ="AccountId"></key>
+			<one-to-many class="Transaction"/>
+		</set>
+	</class>
+</hibernate-mapping>
