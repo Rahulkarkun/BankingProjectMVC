@@ -1,0 +1,42 @@
+﻿@{
+    ViewBag.Title = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<body style="background: linear-gradient(to right, #4e54c8, #8f94fb); color: black;">
+    <div class="container" style="background-color: #34495e; padding: 20px; border-radius: 10px; margin-top: 20px;">
+        <h2 style="color: white; margin-bottom: 20px;">Admin Dashboard</h2>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card" style="background-color: #2c3e50; color: white;">
+                    <div class="card-body">
+                        <h5 class="card-title">Customers</h5>
+                        <p class="card-text">View and manage customer information.</p>
+                        @Html.ActionLink("View Customers", "Index", "Customer", new { area = "" }, new { @class = "btn btn-primary" })
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card" style="background-color: #2c3e50; color: white;">
+                    <div class="card-body">
+                        <h5 class="card-title">Transactions</h5>
+                        <p class="card-text">View and manage transactions.</p>
+                        @Html.ActionLink("View Transactions", "Index", "Transaction", new { area = "" }, new { @class = "btn btn-primary" })
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card" style="background-color: #2c3e50; color: white;">
+                    <div class="card-body">
+                        <h5 class="card-title">Accounts</h5>
+                        <p class="card-text">View and manage accounts.</p>
+                        @Html.ActionLink("View Accounts", "Index", "Account", new { area = "" }, new { @class = "btn btn-primary" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

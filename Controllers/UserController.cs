@@ -9,6 +9,7 @@ using System.Web.Mvc;
 
 namespace BankingProjectMVC.Controllers
 {
+    [AllowAnonymous]
     public class UserController : Controller
     {
         private readonly IUserService _userService; 
@@ -37,8 +38,16 @@ namespace BankingProjectMVC.Controllers
         [HttpPost]
         public ActionResult Create(UserVM userVM)
         {
-            var user = _userAssembler.ConvertToModel(userVM); var newUser = _userService.Add(user);
-            ViewBag.Message = "Added Successfully"; return View();
+            if (ModelState.IsValid)
+            {
+                var user = _userAssembler.ConvertToModel(userVM);
+                var newUser = _userService.Add(user);
+                ViewBag.Message = "Added Successfully";
+                return RedirectToAction("Index");
+            }
+
+            // If ModelState is not valid, return the view with validation errors
+            return View(userVM);
         }
         [HttpGet]
         public ActionResult Edit(int id)

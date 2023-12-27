@@ -68,17 +68,23 @@ namespace BankingProjectMVC.Repository
         }
         public List<Account> GetAll()
         {
-            List<Account> account = new List<Account>() { };
+            List<Account> accounts = new List<Account>();
             using (var session = NHibernateHelper.OpenSession())
             {
                 using (var txn = session.BeginTransaction())
                 {
-                    account = session.Query<Account>().Fetch(x=>x.Transactions).ToList();
-                    txn.Commit();
+                    accounts = session.Query<Account>()
+                        .Fetch(x => x.Transactions)
+                        .Fetch(x => x.AccountType)
+                        .Fetch(x => x.Customer)
+                        .ToList();
 
+                    txn.Commit();
                 }
             }
-            return account;
+            return accounts;
         }
+
+
     }
 }

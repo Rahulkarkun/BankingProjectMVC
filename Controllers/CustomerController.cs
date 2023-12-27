@@ -36,6 +36,12 @@ namespace BankingAppMVC.Controllers
         //    return View(customers);
         //}
 
+        public ActionResult AdminDashboard()
+        {
+            // You can add any additional logic or data retrieval here if needed
+            return View();
+        }
+
         public ActionResult Index()
         {
             var customers = _customerService.GetAll();
@@ -58,10 +64,14 @@ namespace BankingAppMVC.Controllers
         [HttpPost]
         public ActionResult Create(CustomerVM customerVM)
         {
-            var customer = _customerAssembler.ConvertToModel(customerVM);
-            var newCustomer = _customerService.Add(customer);
-            ViewBag.Message = "Added Successfully";
-            return View();
+            if (ModelState.IsValid)
+            {
+                var customer = _customerAssembler.ConvertToModel(customerVM);
+                var newCustomer = _customerService.Add(customer);
+                ViewBag.Message = "Added Successfully";
+                return View();
+            }
+            return View(customerVM);
         }
         //[HttpGet]
         //public ActionResult Edit(int id)

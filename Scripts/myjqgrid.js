@@ -128,4 +128,59 @@
             );
         }
     })
+
+    var $AccountGrid = $("#AccountGrid").jqGrid({
+        url: '/Account/GetData',
+        mtype: 'GET',
+        datatype: 'json',
+        contentType: "application/json; charset-utf-8",
+        colNames: ['Id', 'AccountNo', 'AccountType', 'Balance', 'Customer', 'TransactionsCount','Status'],
+        colModel: [
+            { label: 'Id', name: 'Id', key: true, search: true },
+            { label: 'AccountNo', name: 'AccountNo', editable: true, search: true },
+            { label: 'AccountTypeId', name: 'AccountTypeId', editable: true, search: true },
+            { label: 'Balance', name: 'Balance', editable: true, search: true },
+            { label: 'Customer', name: 'Customer', editable: true, search: true },
+            { label: 'TransactionsCount', name: 'TransactionsCount', editable: true, search: true },
+            { label: 'Status', name: 'Status', editable: true, search: true },
+        ],
+        rowNum: 5,
+        rowList: [5, 10, 15],
+        pager: '#AccountPager',
+        viewrecords: true,
+        height: 250,
+        caption: "Account Records",
+        search: {
+            multipleSearch: true,
+            multipleGroup: true,
+            showQuery: true
+        },
+        gridComplete: function () {
+            $("#AccountGrid").jqGrid('navGrid', '#AccountPager', { edit: false, add: false, del: false, refresh: true },
+                {
+                    url: '/Account/Edit',
+                    recreateForm: true,
+                    closeAfterEdit: true,
+                    beforeShowForm: function (form) {
+                        // Disable the input field for the Id property
+                        $('#Id', form).attr('readonly', 'readonly');
+                    },
+                    afterSubmit: function (response, postdata) {
+                        var result = JSON.parse(response.responseText);
+                        if (result.success) {
+                            alert(result.message);
+                            return [true];
+                        } else {
+                            alert(result.message);
+                            return [false];
+                        }
+                    },
+                },
+                {
+                    closeAfterSearch: true
+                },
+            );
+        }
+    })
+
 });

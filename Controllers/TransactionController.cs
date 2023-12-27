@@ -35,10 +35,14 @@ namespace BankingProjectMVC.Controllers
         [HttpPost]
         public ActionResult Create(TransactionVM transactionVM)
         {
-            var transaction = _transactionAssembler.ConvertToModel(transactionVM);
-            var newTransaction = _transactionService.Add(transaction);
-            ViewBag.Message = "Added Successfully";
-            return View();
+            if (ModelState.IsValid)
+            {
+                var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+                var newTransaction = _transactionService.Add(transaction);
+                ViewBag.Message = "Added Successfully";
+                return View();
+            }
+            return View(transactionVM);
         }
         //[HttpGet]
         //public ActionResult Edit(int id)
@@ -98,28 +102,33 @@ namespace BankingProjectMVC.Controllers
         [HttpGet]
         public JsonResult GetData(int page, int rows, string sidx, string sord, string searchString)
         {
-            //using (var session = NhibernateHelper.OpenSession())
-            //{
-            //    using (var txn = session.BeginTransaction())
-            //    {
-            //var customers = session.Query<Transaction>().ToList();
-            var customers = _transactionService.GetAll();
+            var transactions = _transactionService.GetAll();
+
             if (!string.IsNullOrWhiteSpace(searchString))
             {
                 int searchId;
                 if (int.TryParse(searchString, out searchId))
                 {
                     // If the search term is a valid integer, search by Id
-                    customers = customers.Where(e => e.Id == searchId || e.TransactionType.Contains(searchString)).ToList();
+                    transactions = transactions
+                        .Where(e => e.Id == searchId)
+                        .ToList();
                 }
                 else
                 {
-                    // If the search term is not an integer, search by FirstName or LastName
-                    customers = customers.Where(e => e.TransactionType.Contains(searchString)).ToList();
+                    // If the search term is not an integer, search by other fields
+                    transactions = transactions
+                        .Where(e => e.TransactionType.Contains(searchString) ||
+                                    e.Amount.ToString().Contains(searchString) ||
+                                    e.Date.ToString().Contains(searchString) ||
+                                    e.ToAccountNumber.Contains(searchString) ||
+                                    e.FromAccountNumber.Contains(searchString))
+                        .ToList();
                 }
             }
+
             // Get total count of records (for pagination)
-            int totalCount = customers.Count();
+            int totalCount = transactions.Count();
 
             // Calculate total pages
             int totalPages = (int)Math.Ceiling((double)totalCount / rows);
@@ -129,22 +138,23 @@ namespace BankingProjectMVC.Controllers
                 total = totalPages,
                 page,
                 records = totalCount,
-                rows = (from customer in customers
+                rows = (from transaction in transactions
                         orderby sidx + " " + sord
                         select new
                         {
                             cell = new string[] {
-                                        customer.Id.ToString(),
-                                        customer.TransactionType,
-                                        customer.Amount.ToString(),
-                                        customer.Date.ToString(),
-                                        customer.FromAccountNumber,
-                                        customer.ToAccountNumber,
-                                    }
+                        transaction.Id.ToString(),
+                        transaction.TransactionType,
+                        transaction.Amount.ToString(),
+                        transaction.Date.ToString(),
+                        transaction.ToAccountNumber,
+                        transaction.FromAccountNumber,
+                    }
                         }).Skip((page - 1) * rows).Take(rows).ToArray()
             };
             return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
+
 
         public ActionResult DownloadExcel()
         {

@@ -6,31 +6,154 @@
     <title>@ViewBag.Title - My ASP.NET Application</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    <style>
+        body {
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+
+        .custom-navbar {
+            position:relative;
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            /*overflow-x: hidden;*/ /* Prevent horizontal scrolling in the navbar */
+        }
+
+        .navbar-nav .nav-link {
+            color: white !important;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+            .navbar-nav .nav-link:hover {
+                background-color: #3498db; /* Blue color on hover */
+                color: white !important;
+            }
+
+        .nav-link-custom.logout:hover {
+            background-color: #e74c3c; /* Red color on hover for Logout button */
+            color: white !important;
+        }
+
+        .dropdown-item:hover {
+            background-color: #3498db; /* Blue color on hover for dropdown items */
+            color: white !important;
+        }
+
+        .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translate3d(0, 0, 0);
+            z-index: 10000; /* Set the z-index value to a higher value */
+        }
+
+        
+
+        .nav-link-inline {
+            white-space: nowrap; /* Prevent line break */
+            display: inline-block; /* Display items in a single line */
+        }
+
+        .body-content {
+            min-height: 10vh;
+            overflow-x: hidden; /* Prevent horizontal scrolling in the content */
+        }
+
+        footer {
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            color: white;
+            padding: 10px;
+            position: absolute;
+            bottom: 0px;
+            width: 100%;
+            text-align: center;
+            /*overflow-x: hidden;*/ /* Prevent horizontal scrolling in the footer */
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark custom-navbar">
         <div class="container">
-            @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
+            @Html.ActionLink("Banking Application", "Index", "Home", new { area = "" }, new { @class = "navbar-brand text-uppercase font-weight-bold" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Contact", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        if (User.IsInRole("Admin"))
+                        {
+                            <li style="margin-left:120px">
+                                @Html.ActionLink("Dashboard", "Contact", "Home", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("Customer", "Index", "Customer", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("View Document", "Index", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("View Account", "Index", "Account", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("View Transaction", "Index", "Transaction", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                        }
+                        else if (User.IsInRole("Customer"))
+                        {
+                            <li class="nav-item dropdown" style="margin-left:250px">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Customer Profile
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    @Html.ActionLink("Edit Profile", "Edit", "Customer", new { area = "" }, new { @class = "dropdown-item" })
+                                    @Html.ActionLink("Change Password", "Action2", "Controller", new { area = "" }, new { @class = "dropdown-item" })
+                                </div>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownActions" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Actions
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropdownActions">
+                                    @Html.ActionLink("Deposit", "Edit", "Customer", new { area = "" }, new { @class = "dropdown-item" })
+                                    @Html.ActionLink("Withdraw", "Action2", "Controller", new { area = "" }, new { @class = "dropdown-item" })
+                                    @Html.ActionLink("Transfer", "Action2", "Controller", new { area = "" }, new { @class = "dropdown-item" })
+                                </div>
+                            </li>
+
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("Upload Document", "Create", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                            <li style="margin-left: 10px">
+                                @Html.ActionLink("Passbook", "Index", "Transaction", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>
+                        }
+                        <li style="margin-left:200px">
+                            @Html.ActionLink("Logout", "Logout", "Login", new { area = "" }, new { @class = "nav-link nav-link-custom logout" })
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
+                            @Html.ActionLink("Login", "Login", "Login", new { area = "" }, new { @class = "nav-link" })
+                        </li>
+                    }
+
                 </ul>
             </div>
         </div>
     </nav>
+
     <div class="container body-content">
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
-        </footer>
     </div>
+
+    <footer>
+        <p>&copy; @DateTime.Now.Year - Rahul Karkun Pvt Ltd</p>
+    </footer>
 
     @*@Scripts.Render("~/bundles/jquery")*@
     @Scripts.Render("~/bundles/bootstrap")

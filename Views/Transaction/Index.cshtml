@@ -5,85 +5,41 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<h2>All Transaction Records</h2>
 
-<p>
-    @*@Html.ActionLink("Create New", "Create")*@
-    <button id="downloadButton">Download Excel</button>
-</p>
+<body style="background: linear-gradient(to right, #4e54c8, #8f94fb); color: black; padding: 10px; margin-top: 20px; overflow-x: hidden;">
 
-<link href="~/Content/themes/base/jquery.ui.all.css" rel="stylesheet" type="text/css" />
-<link href="~/Content/jquery.jqGrid/ui.jqgrid.css" rel="stylesheet" type="text/css" />
-<script src="~/Scripts/jquery-3.4.1.min.js" type="text/javascript"></script>
-<script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
-<script src="~/Scripts/i18n/grid.locale-en.js" type="text/javascript"></script>
-<script src="~/Scripts/jquery.jqGrid.min.js" type="text/javascript"></script>
-<script src="~/Scripts/myjqgrid.js" type="text/javascript"></script>
+    <style>
+        #TransactionGrid-container {
+            overflow-x: auto; /* Add horizontal scrollbar for the container */
+            margin-left: 120px;
+            /*text-align: center;*/ /* Center the content horizontally */
+        }
 
+        #TransactionGrid {
+            background-color: inherit;
+            color: white;
+            border-radius: 10px;
+            width: 100%; /* Set table width to 80% of the container */
+            /*margin: 0 auto;*/ /* Center the table within the container */
+        }
+    </style>
 
-@*<table class="table">
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.TransactionType)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Amount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Date)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ToAccountNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FromAccountNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AccountId)
-            </th>
-            <th></th>
-        </tr>
+    <link href="~/Content/themes/base/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/jquery.jqGrid/ui.jqgrid.css" rel="stylesheet" type="text/css" />
+    <script src="~/Scripts/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="~/Scripts/jquery-ui-1.10.0.min.js"></script>
+    <script src="~/Scripts/i18n/grid.locale-en.js" type="text/javascript"></script>
+    <script src="~/Scripts/jquery.jqGrid.min.js" type="text/javascript"></script>
+    <script src="~/Scripts/myjqgrid.js" type="text/javascript"></script>
 
-    @foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.TransactionType)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Amount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Date)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ToAccountNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FromAccountNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AccountId)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
-                @Html.ActionLink("Details", "Details", new { id=item.Id }) |
-                @Html.ActionLink("Delete", "Delete", new { id=item.Id })
-            </td>
-        </tr>
-    }
+    <button id="downloadButton" class="btn btn-success">@Html.ActionLink("Download Excel", "DownloadExcel", "Transaction", null, new { style = "color: white;" })</button>
+    <br />
+    <br />
 
-    </table>*@
-
-<br />
-<br />
-
-<div>
-    <table id="TransactionGrid"></table>
+    <div id="TransactionGrid-container">
+        <table id="TransactionGrid"></table>
+    </div>
     <div id="TransactionPager"></div>
-</div>
 
-<script>
-    document.getElementById("downloadButton").addEventListener("click", function () {
-        window.location.href = '@Url.Action("DownloadExcel", "Transaction")';
-    });
-</script>
+</body>
