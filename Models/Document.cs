@@ -16,5 +16,7 @@ namespace BankingProjectMVC.Models
 
             public virtual Customer Customer { get; set; }
 
+            public virtual bool IsVerified { get; set; }
+
     }
 }

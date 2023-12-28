@@ -15,11 +15,13 @@ namespace BankingProjectMVC.Controllers
     public class TransactionController : Controller
     {
         private readonly ITransactionService _transactionService;
+        private readonly IAccountService _accountService;
         private readonly TransactionAssembler _transactionAssembler;
-        public TransactionController(ITransactionService transactionService, TransactionAssembler transactionAssembler)
+        public TransactionController(ITransactionService transactionService, TransactionAssembler transactionAssembler, IAccountService accountService)
         {
             _transactionService = transactionService;
             _transactionAssembler = transactionAssembler;
+            _accountService = accountService;
         }
         public ActionResult Index()
         {
@@ -104,55 +106,123 @@ namespace BankingProjectMVC.Controllers
         {
             var transactions = _transactionService.GetAll();
 
-            if (!string.IsNullOrWhiteSpace(searchString))
+            // Check if the user is in the "Admin" role
+            if (User.IsInRole("Admin"))
             {
-                int searchId;
-                if (int.TryParse(searchString, out searchId))
+                // Apply search filter if searchString is not empty
+                if (!string.IsNullOrWhiteSpace(searchString))
                 {
-                    // If the search term is a valid integer, search by Id
-                    transactions = transactions
-                        .Where(e => e.Id == searchId)
-                        .ToList();
+                    int searchId;
+                    if (int.TryParse(searchString, out searchId))
+                    {
+                        // If the search term is a valid integer, search by Id
+                        transactions = transactions
+                            .Where(e => e.Id == searchId)
+                            .ToList();
+                    }
+                    else
+                    {
+                        // If the search term is not an integer, search by other fields
+                        transactions = transactions
+                            .Where(e => e.TransactionType.Contains(searchString) ||
+                                        e.Amount.ToString().Contains(searchString) ||
+                                        e.Date.ToString().Contains(searchString) ||
+                                        e.ToAccountNumber.Contains(searchString) ||
+                                        e.FromAccountNumber.Contains(searchString))
+                            .ToList();
+                    }
+                }
+
+                // Get total count of records (for pagination)
+                int totalCount = transactions.Count();
+
+                // Calculate total pages
+                int totalPages = (int)Math.Ceiling((double)totalCount / rows);
+
+                var jsonData = new
+                {
+                    total = totalPages,
+                    page,
+                    records = totalCount,
+                    rows = (from transaction in transactions
+                            orderby sidx + " " + sord
+                            select new
+                            {
+                                cell = new string[]
+                                {
+                            transaction.Id.ToString(),
+                            transaction.TransactionType,
+                            transaction.Amount.ToString(),
+                            transaction.Date.ToString(),
+                            transaction.ToAccountNumber,
+                            transaction.FromAccountNumber,
+                                }
+                            }).Skip((page - 1) * rows).Take(rows).ToArray()
+                };
+
+                return Json(jsonData, JsonRequestBehavior.AllowGet);
+            }
+            else if (User.IsInRole("Customer"))
+            {
+                int customerID;
+                if (Session["LoginId"] != null && int.TryParse(Session["LoginId"].ToString(), out customerID))
+                {
+                    var customerTransactions = _transactionService.GetAll().Where(x => x.Account.Customer.Id == customerID).ToList();
+
+                    if (!string.IsNullOrWhiteSpace(searchString))
+                    {
+                        int searchId;
+                        if (int.TryParse(searchString, out searchId))
+                        {
+                            customerTransactions = customerTransactions.Where(e => e.Id == searchId).ToList();
+                        }
+                        else
+                        {
+                            customerTransactions = customerTransactions.Where(e =>
+                                e.TransactionType.Contains(searchString) ||
+                                e.Amount.ToString().Contains(searchString) ||
+                                e.Date.ToString().Contains(searchString) ||
+                                e.ToAccountNumber.Contains(searchString) ||
+                                e.FromAccountNumber.Contains(searchString)
+                            ).ToList();
+                        }
+                    }
+
+                    int totalCount = customerTransactions.Count();
+                    int totalPages = (int)Math.Ceiling((double)totalCount / rows);
+
+                    var jsonData = new
+                    {
+                        total = totalPages,
+                        page,
+                        records = totalCount,
+                        rows = (from transaction in customerTransactions
+                                orderby sidx + " " + sord
+                                select new
+                                {
+                                    cell = new string[]
+                                    {
+                                transaction.Id.ToString(),
+                                transaction.TransactionType,
+                                transaction.Amount.ToString(),
+                                transaction.Date.ToString(),
+                                transaction.ToAccountNumber,
+                                transaction.FromAccountNumber,
+                                    }
+                                }).Skip((page - 1) * rows).Take(rows).ToArray()
+                    };
+
+                    return Json(jsonData, JsonRequestBehavior.AllowGet);
                 }
                 else
                 {
-                    // If the search term is not an integer, search by other fields
-                    transactions = transactions
-                        .Where(e => e.TransactionType.Contains(searchString) ||
-                                    e.Amount.ToString().Contains(searchString) ||
-                                    e.Date.ToString().Contains(searchString) ||
-                                    e.ToAccountNumber.Contains(searchString) ||
-                                    e.FromAccountNumber.Contains(searchString))
-                        .ToList();
+                    // Unauthorized access if the session does not contain a valid customer ID
+                    return Json(new { error = "Unauthorized access" });
                 }
             }
 
-            // Get total count of records (for pagination)
-            int totalCount = transactions.Count();
-
-            // Calculate total pages
-            int totalPages = (int)Math.Ceiling((double)totalCount / rows);
-
-            var jsonData = new
-            {
-                total = totalPages,
-                page,
-                records = totalCount,
-                rows = (from transaction in transactions
-                        orderby sidx + " " + sord
-                        select new
-                        {
-                            cell = new string[] {
-                        transaction.Id.ToString(),
-                        transaction.TransactionType,
-                        transaction.Amount.ToString(),
-                        transaction.Date.ToString(),
-                        transaction.ToAccountNumber,
-                        transaction.FromAccountNumber,
-                    }
-                        }).Skip((page - 1) * rows).Take(rows).ToArray()
-            };
-            return Json(jsonData, JsonRequestBehavior.AllowGet);
+            // Default return statement or throw an exception
+            return Json(new { error = "Invalid role" });
         }
 
 
@@ -188,5 +258,64 @@ namespace BankingProjectMVC.Controllers
             var memoryStream = new MemoryStream(package.GetAsByteArray());
             return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Transactions.xlsx");
         }
+
+        [HttpGet]
+        public ActionResult Deposit()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Deposit(TransactionVM transactionVM)
+        {
+            // Check if FromAccountNumber is null, and set it to "SELF" if it is
+            if (string.IsNullOrEmpty(transactionVM.FromAccountNumber))
+            {
+                transactionVM.FromAccountNumber = "SELF";
+            }
+
+            var account = _accountService.GetById(transactionVM.AccountId);
+            if (account != null)
+            {
+                Session["AccountId"] = account.Id;
+                account.Balance = account.Balance + transactionVM.Amount;
+                _accountService.Update(account);
+                var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+                var newTransaction = _transactionService.Add(transaction);
+                return Json(new { success = true, message = "Amount Deposited Successfully." });
+            }
+            return Json(new { success = false, message = "No such Account Found." });
+        }
+
+
+        [HttpGet]
+        public ActionResult Withdraw()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Withdraw(TransactionVM transactionVM)
+        {
+            if (string.IsNullOrEmpty(transactionVM.ToAccountNumber))
+            {
+                transactionVM.ToAccountNumber = "SELF";
+            }
+            var account = _accountService.GetById(transactionVM.AccountId);
+            if (account != null)
+            {
+                if (account.Balance > transactionVM.Amount)
+                {
+                    account.Balance = account.Balance - transactionVM.Amount;
+                    _accountService.Update(account);
+                    var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+                    var newTransaction = _transactionService.Add(transaction);
+                    return Json(new { success = true, message = "Amount Withdrawn Successfully." });
+                }
+                return Json(new { success = false, message = "Insuccificent Balance." });
+            }
+            return Json(new { success = false, message = "No such Account Found." });
+
+        }
+
     }
 }

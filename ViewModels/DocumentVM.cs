@@ -20,6 +20,8 @@ namespace BankingProjectMVC.ViewModels
 
         [Required(ErrorMessage = "Customer Id is required.")]
         public virtual int CustomerId { get; set; }
+        public virtual string CustomerName { get; set; }
+        public bool IsVerified { get; set; }
         public virtual HttpPostedFileBase PostedFile { get; set; }
     }
 }

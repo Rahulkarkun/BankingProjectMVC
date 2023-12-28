@@ -14,6 +14,7 @@ namespace BankingProjectMVC.Controllers
     {// GET: User
         private readonly IDocumentService _documentService;
         private readonly DocumentAssembler _documentAssembler;
+        private readonly ICustomerService _customerService;
 
         public DocumentController(IDocumentService documentService, DocumentAssembler documentAssembler)
         {
@@ -28,6 +29,7 @@ namespace BankingProjectMVC.Controllers
         public ActionResult Index()
         {
             var documents = _documentService.GetAll();
+            //var customers = _customerService.GetAll();
             var documentVMs = documents.Select(d => _documentAssembler.ConvertToViewModel(d)).ToList();
             return View(documentVMs);
         }
@@ -85,5 +87,64 @@ namespace BankingProjectMVC.Controllers
             }
             return RedirectToAction("Index");
         }
+
+        [HttpGet]
+        public ActionResult ViewDocument(int id, string fileName)
+        {
+            // Retrieve the document based on the ID
+            var document = _documentService.GetById(id);
+
+            if (document != null)
+            {
+                // Set the Content-Disposition header to "inline" to instruct the browser to display the content
+                Response.AppendHeader("Content-Disposition", "inline; filename=" + fileName);
+
+                // Set the content type appropriately based on your document type
+                Response.ContentType = "application/pdf"; // Set to "application/pdf" for PDF documents
+
+                // Write the document content to the response stream
+                return File(document.DocumentFile, "application/pdf", fileName);
+            }
+            else
+            {
+                return HttpNotFound();
+            }
+        }
+
+        //[HttpPost]
+        //public ActionResult VerifyDocument(int id, bool isVerified)
+        //{
+        //    var document = _documentService.GetById(id);
+
+        //    if (document != null)
+        //    {
+        //        document.IsVerified = isVerified;
+        //        _documentService.Update(document);
+        //        return Json(new { success = true, isVerified = document.IsVerified });
+        //    }
+        //    else
+        //    {
+        //        return Json(new { success = false, message = "Document not found" });
+        //    }
+        //}
+
+        [HttpPost]
+        public ActionResult Verify(int id)
+        {
+            var document = _documentService.GetById(id);
+            if (document != null)
+            {
+                document.IsVerified = true;
+                _documentService.Update(document);
+            }
+            return RedirectToAction("Index");
+        }
+
+
+
+
+
+
+
     }
 }

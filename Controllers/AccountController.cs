@@ -117,87 +117,152 @@ namespace BankingProjectMVC.Controllers
         [HttpGet]
         public JsonResult GetData(int page, int rows, string sidx, string sord, string searchString)
         {
-            var accounts = _accountService.GetAll();
-
-            if (!string.IsNullOrWhiteSpace(searchString))
+            if (User.IsInRole("Admin"))
             {
-                int searchId;
-                if (int.TryParse(searchString, out searchId))
+                var accounts = _accountService.GetAll();
+
+                // Apply search filter if searchString is not empty
+                if (!string.IsNullOrWhiteSpace(searchString))
                 {
-                    // If the search term is a valid integer, search by Id
-                    accounts = accounts.Where(e => e.Id == searchId).ToList();
+                    int searchId;
+                    if (int.TryParse(searchString, out searchId))
+                    {
+                        accounts = accounts.Where(e => e.Id == searchId).ToList();
+                    }
+                    else
+                    {
+                        accounts = accounts.Where(e =>
+                            e.AccountNo.Contains(searchString) ||
+                            e.AccountType.Type.ToString().Contains(searchString) ||
+                            e.Balance.ToString().Contains(searchString) ||
+                            (e.Customer.FirstName + " " + e.Customer.LastName).Contains(searchString) ||
+                            e.Transactions.Count().ToString().Contains(searchString) ||
+                            e.Status.ToString().Contains(searchString)
+                        ).ToList();
+                    }
+                }
+
+                int totalCount = accounts.Count();
+                int totalPages = (int)Math.Ceiling((double)totalCount / rows);
+
+                var jsonData = new
+                {
+                    total = totalPages,
+                    page,
+                    records = totalCount,
+                    rows = (from account in accounts
+                            orderby sidx + " " + sord
+                            select new
+                            {
+                                cell = new string[]
+                                {
+                            account.Id.ToString(),
+                            account.AccountNo,
+                            account.AccountType.Type,
+                            account.Balance.ToString(),
+                            $"{account.Customer.FirstName} {account.Customer.LastName}",
+                            account.Transactions.Count().ToString(),
+                            account.Status.ToString(),
+                                }
+                            }).Skip((page - 1) * rows).Take(rows).ToArray()
+                };
+
+                return Json(jsonData, JsonRequestBehavior.AllowGet);
+            }
+            else if (User.IsInRole("Customer"))
+            {
+                int customerID;
+                if (Session["LoginId"] != null && int.TryParse(Session["LoginId"].ToString(), out customerID))
+                {
+                    var accounts = _accountService.GetAll().Where(x => x.Customer.Id == customerID).ToList();
+
+                    if (!string.IsNullOrWhiteSpace(searchString))
+                    {
+                        int searchId;
+                        if (int.TryParse(searchString, out searchId))
+                        {
+                            accounts = accounts.Where(e => e.Id == searchId).ToList();
+                        }
+                        else
+                        {
+                            accounts = accounts.Where(e =>
+                                e.AccountNo.Contains(searchString) ||
+                                e.AccountType.Type.ToString().Contains(searchString) ||
+                                e.Balance.ToString().Contains(searchString) ||
+                                (e.Customer.FirstName + " " + e.Customer.LastName).Contains(searchString) ||
+                                e.Transactions.Count().ToString().Contains(searchString) ||
+                                e.Status.ToString().Contains(searchString)
+                            ).ToList();
+                        }
+                    }
+
+                    int totalCount = accounts.Count();
+                    int totalPages = (int)Math.Ceiling((double)totalCount / rows);
+
+                    var jsonData = new
+                    {
+                        total = totalPages,
+                        page,
+                        records = totalCount,
+                        rows = (from account in accounts
+                                orderby sidx + " " + sord
+                                select new
+                                {
+                                    cell = new string[]
+                                    {
+                                account.Id.ToString(),
+                                account.AccountNo,
+                                account.AccountType.Type,
+                                account.Balance.ToString(),
+                                $"{account.Customer.FirstName} {account.Customer.LastName}",
+                                account.Transactions.Count().ToString(),
+                                account.Status.ToString(),
+                                    }
+                                }).Skip((page - 1) * rows).Take(rows).ToArray()
+                    };
+
+                    return Json(jsonData, JsonRequestBehavior.AllowGet);
                 }
                 else
                 {
-                    // If the search term is not an integer, search by other fields
-                    accounts = accounts.Where(e =>
-                        e.AccountNo.Contains(searchString) ||
-                        e.AccountType.Type.ToString().Contains(searchString) ||
-                        e.Balance.ToString().Contains(searchString) ||
-                        (e.Customer.FirstName + " " + e.Customer.LastName).Contains(searchString) ||
-                        e.Transactions.Count().ToString().Contains(searchString) ||
-                        e.Status.ToString().Contains(searchString)
-                    ).ToList();
+                    return Json(new { error = "Unauthorized access" });
                 }
             }
 
-            // Get total count of records (for pagination)
-            int totalCount = accounts.Count();
-
-            // Calculate total pages
-            int totalPages = (int)Math.Ceiling((double)totalCount / rows);
-
-            var jsonData = new
-            {
-                total = totalPages,
-                page,
-                records = totalCount,
-                rows = (from account in accounts
-                        orderby sidx + " " + sord
-                        select new
-                        {
-                            cell = new string[] {
-                                account.Id.ToString(),
-                                account.AccountNo,
-                                account.AccountType.Type,  // Use Type property of AccountType
-                                account.Balance.ToString(),
-                                $"{account.Customer.FirstName} {account.Customer.LastName}",  // Concatenate FirstName and LastName
-                                account.Transactions.Count().ToString(),
-                                account.Status.ToString(),
-                                //customer.IsActive?"True":"False",
-                            }
-                        }).Skip((page - 1) * rows).Take(rows).ToArray()
-            };
-            return Json(jsonData, JsonRequestBehavior.AllowGet);
+            // Default return statement or throw an exception
+            return Json(new { error = "Invalid role" });
         }
+
+
+
 
 
 
         [HttpPost]
-        public ActionResult Edit(Account account)
-        {
-            //using (var session = NHibernateHelper.OpenSession())
-            //{
-            //    using (var txn = session.BeginTransaction())
-            //    {
-            var existingAccount = _accountService.GetById(account.Id);
-            if (existingAccount != null)
+            public ActionResult Edit(Account account)
             {
-                existingAccount.AccountNo = account.AccountNo;
-                existingAccount.AccountType = account.AccountType;
-                existingAccount.Customer = account.Customer;
-                existingAccount.Balance = account.Balance;
-                existingAccount.Transactions = account.Transactions;
-                existingAccount.Status = account.Status;
-                _accountService.Update(existingAccount);
-                //session.Update(existingCustomer);
-                //txn.Commit();
-                return Json(new { success = true, message = "User updated successfully." });
+                //using (var session = NHibernateHelper.OpenSession())
+                //{
+                //    using (var txn = session.BeginTransaction())
+                //    {
+                var existingAccount = _accountService.GetById(account.Id);
+                if (existingAccount != null)
+                {
+                    existingAccount.AccountNo = account.AccountNo;
+                    existingAccount.AccountType = account.AccountType;
+                    existingAccount.Customer = account.Customer;
+                    existingAccount.Balance = account.Balance;
+                    existingAccount.Transactions = account.Transactions;
+                    existingAccount.Status = account.Status;
+                    _accountService.Update(existingAccount);
+                    //session.Update(existingCustomer);
+                    //txn.Commit();
+                    return Json(new { success = true, message = "User updated successfully." });
+                }
+                //return RedirectToAction("Index");
+
+                return Json(new { success = false, message = "No such User Exists" });
             }
-            //return RedirectToAction("Index");
 
-            return Json(new { success = false, message = "No such User Exists" });
         }
-
-    }
 }

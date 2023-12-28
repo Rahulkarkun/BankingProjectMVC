@@ -21,10 +21,13 @@ namespace BankingProjectMVC.Controllers
         // GET: Login
         private readonly IUserService _userService;
         private readonly UserAssembler _userAssembler;
-        public LoginController(IUserService userService, UserAssembler userAssembler)
+        private readonly ICustomerService _customerService;
+
+        public LoginController(IUserService userService, UserAssembler userAssembler, ICustomerService customerService)
         {
             _userService = userService;
             _userAssembler = userAssembler;
+            _customerService = customerService;
         }
         public ActionResult Index()
         {
@@ -41,6 +44,10 @@ namespace BankingProjectMVC.Controllers
             try
             {
                 var user = _userService.GetUserByUsername(userVM.Username);
+                var customers = _customerService.GetAll();
+                var data = customers.Where(x => x.User.Id == user.Id).FirstOrDefault();
+                Session["LoginId"] = data.Id;
+                //TempData["LoginId"] = data.Id;
                 User result = null;
                 var getUser = _userService.GetUserWithRole(user.Id);
 
@@ -56,7 +63,7 @@ namespace BankingProjectMVC.Controllers
                     if (result.Role.RoleName == "Admin")
                         return RedirectToAction("AdminDashboard", "Customer");
 
-                    return RedirectToAction("About", "Home");
+                    return RedirectToAction("CustomerDashboard", "Customer");
                 }
 
                 ViewBag.Message = "Username or Password does not match";
@@ -80,6 +87,7 @@ namespace BankingProjectMVC.Controllers
         {
             //Session.Clear();
             FormsAuthentication.SignOut();
+            Session["LoginId"] = null; // Clear the customer's ID from the session
             return RedirectToAction("Login");
         }
 

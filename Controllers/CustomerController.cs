@@ -42,6 +42,12 @@ namespace BankingAppMVC.Controllers
             return View();
         }
 
+        public ActionResult CustomerDashboard()
+        {
+            // You can add any additional logic or data retrieval here if needed
+            return View();
+        }
+
         public ActionResult Index()
         {
             var customers = _customerService.GetAll();

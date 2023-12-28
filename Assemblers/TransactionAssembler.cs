@@ -11,10 +11,13 @@ namespace BankingProjectMVC.Assemblers
     public class TransactionAssembler
     {
         private readonly ITransactionService _transactionService;
+        private readonly IAccountService _accountService;
 
-        public TransactionAssembler(ITransactionService transactionService)
+
+        public TransactionAssembler(ITransactionService transactionService, IAccountService accountService)
         {
             _transactionService = transactionService;
+            _accountService = accountService;
         }
         public TransactionVM ConvertToViewModel(Transaction transaction)
         {
@@ -34,6 +37,7 @@ namespace BankingProjectMVC.Assemblers
 
         public Transaction ConvertToModel(TransactionVM transactionVM)
         {
+            var acc = _accountService.GetById(transactionVM.AccountId);
             return new Transaction()
             {
                 Id = transactionVM.Id,
@@ -42,8 +46,8 @@ namespace BankingProjectMVC.Assemblers
                 Date = transactionVM.Date,
                 ToAccountNumber = transactionVM.ToAccountNumber,
                 FromAccountNumber = transactionVM.FromAccountNumber,
-                Account = new Account() { Id = transactionVM.AccountId },
-
+                //Account = new Account() { Id = transactionVM.AccountId },
+                Account = acc,
 
             };
         }

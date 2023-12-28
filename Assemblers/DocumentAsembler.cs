@@ -45,6 +45,7 @@ namespace BankingProjectMVC.Assemblers
                 Id = document.Id,
                 DocumentName = document.DocumentName,
                 DocumentFile = document.DocumentFile,
+                CustomerName = document.Customer.FirstName,
                 CustomerId = document.Customer.Id,
             };
         }

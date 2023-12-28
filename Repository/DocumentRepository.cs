@@ -1,5 +1,6 @@
 ﻿using BankingProjectMVC.Helpers;
 using BankingProjectMVC.Models;
+using NHibernate.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,7 @@ namespace BankingProjectMVC.Repository
             {
                 using (var txn = session.BeginTransaction())
                 {
-                    document = session.Load<Document>(documentId);
+                    document = session.Query<Document>().Where(c => c.Id == documentId).Fetch(c => c.Customer).FirstOrDefault();
                     txn.Commit();
                 }
             }
@@ -70,7 +71,7 @@ namespace BankingProjectMVC.Repository
             {
                 using (var txn = session.BeginTransaction())
                 {
-                    documents = session.Query<Document>().ToList();
+                    documents = session.Query<Document>().Fetch(x => x.Customer).ToList();
                     txn.Commit();
                 }
             }
