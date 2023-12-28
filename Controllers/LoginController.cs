@@ -43,10 +43,11 @@ namespace BankingProjectMVC.Controllers
         {
             try
             {
+                
                 var user = _userService.GetUserByUsername(userVM.Username);
-                var customers = _customerService.GetAll();
-                var data = customers.Where(x => x.User.Id == user.Id).FirstOrDefault();
-                Session["LoginId"] = data.Id;
+                //var customers = _customerService.GetAll();
+                //var data = customers.Where(x => x.User.Id == user.Id).FirstOrDefault();
+                //Session["LoginId"] = data.Id;
                 //TempData["LoginId"] = data.Id;
                 User result = null;
                 var getUser = _userService.GetUserWithRole(user.Id);
@@ -58,6 +59,12 @@ namespace BankingProjectMVC.Controllers
 
                 if (result != null)
                 {
+                    Session["User"] = result.Username;
+                    //Session["Role"] = result.Role.RoleName;
+                    Session["UserId"] = result.Id;
+                    var customers = _customerService.GetAll();
+                    var data = customers.Where(x => x.User.Id == user.Id).FirstOrDefault();
+                    Session["LoginId"] = data.Id;
                     FormsAuthentication.SetAuthCookie(result.Username, false);
 
                     if (result.Role.RoleName == "Admin")

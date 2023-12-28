@@ -423,6 +423,8 @@
     <Content Include="Views\Transaction\Deposit.cshtml" />
     <Content Include="Views\Transaction\Withdraw.cshtml" />
     <Content Include="Views\Customer\CustomerDashboard.cshtml" />
+    <Content Include="Views\Transaction\Transfer.cshtml" />
+    <Content Include="Views\User\ChangePassword.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

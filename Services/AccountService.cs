@@ -34,5 +34,10 @@ namespace BankingProjectMVC.Services
         {
             return _accountRepository.GetAll();
         }
+
+        public Account GetByAccountNumber(string accNo)
+        {
+            return _accountRepository.GetByAccountNumber(accNo);
+        }
     }
 }

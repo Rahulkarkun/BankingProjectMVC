@@ -128,7 +128,7 @@ namespace BankingProjectMVC.Controllers
         //    }
         //}
 
-        [HttpPost]
+        //[HttpPost]
         public ActionResult Verify(int id)
         {
             var document = _documentService.GetById(id);

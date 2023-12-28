@@ -6,6 +6,7 @@
     <title>@ViewBag.Title - My ASP.NET Application</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             overflow-x: hidden; /* Prevent horizontal scrolling */
@@ -94,31 +95,31 @@
                         if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                @Html.ActionLink("Dashboard", "Contact", "Home", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                @Html.ActionLink("Dashboard", "AdminDashboard", "Customer", new { area = "" }, new { @class = "nav-link nav-link-inline" })
                             </li>
-                            <li class="nav-item">
-                                @Html.ActionLink("View Account", "Index", "Account", new { area = "" }, new { @class = "nav-link nav-link-inline" })
-                            </li>
-                            <li class="nav-item">
-                                @Html.ActionLink("Customer", "Index", "Customer", new { area = "" }, new { @class = "nav-link nav-link-inline" })
-                            </li>
-                            <li class="nav-item">
-                                @Html.ActionLink("View Document", "Index", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
-                            </li>
-                            <li class="nav-item">
-                                @Html.ActionLink("View Transaction", "Index", "Transaction", new { area = "" }, new { @class = "nav-link nav-link-inline" })
-                            </li>
+                            @*<li class="nav-item">
+                                    @Html.ActionLink("View Account", "Index", "Account", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                </li>
+                                <li class="nav-item">
+                                    @Html.ActionLink("Customer", "Index", "Customer", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                </li>*@
+                            @*<li class="nav-item">
+                                    @Html.ActionLink("View Document", "Index", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                </li>*@
+                            @*<li class="nav-item">
+                                    @Html.ActionLink("View Transaction", "Index", "Transaction", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                </li>*@
                         }
                         else if (User.IsInRole("Customer"))
                         {
                             <li class="nav-item">
-                                @Html.ActionLink("View Account", "Index", "Account", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                                @Html.ActionLink("Dashboard", "CustomerDashboard", "Customer", new { area = "" }, new { @class = "nav-link nav-link-inline" })
                             </li>
                             <li class="nav-item dropdown">
                                 @Html.ActionLink("Customer Profile", "#", null, new { @class = "nav-link dropdown-toggle" })
                                 <div class="dropdown-menu">
                                     @Html.ActionLink("Edit Profile", "Edit", "Customer", new { area = "" }, new { @class = "dropdown-item" })
-                                    @Html.ActionLink("Change Password", "Action2", "Controller", new { area = "" }, new { @class = "dropdown-item" })
+                                    @Html.ActionLink("Change Password", "ChangePassword", "User", new { area = "" }, new { @class = "dropdown-item" })
                                 </div>
                             </li>
 
@@ -127,12 +128,15 @@
                                 <div class="dropdown-menu">
                                     @Html.ActionLink("Deposit", "Deposit", "Transaction", new { area = "" }, new { @class = "dropdown-item" })
                                     @Html.ActionLink("Withdraw", "Withdraw", "Transaction", new { area = "" }, new { @class = "dropdown-item" })
-                                    @Html.ActionLink("Transfer", "Action2", "Controller", new { area = "" }, new { @class = "dropdown-item" })
+                                    @Html.ActionLink("Transfer", "Transfer", "Transaction", new { area = "" }, new { @class = "dropdown-item" })
                                 </div>
                             </li>
 
-                            <li class="nav-item">
+                            @*<li class="nav-item">
                                 @Html.ActionLink("Upload Document", "Create", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
+                            </li>*@
+                            <li class="nav-item">
+                                @Html.ActionLink("View Document", "Index", "Document", new { area = "" }, new { @class = "nav-link nav-link-inline" })
                             </li>
                             <li class="nav-item">
                                 @Html.ActionLink("Passbook", "Index", "Transaction", new { area = "" }, new { @class = "nav-link nav-link-inline" })
@@ -141,11 +145,15 @@
                         <li class="nav-item">
                             @Html.ActionLink("Logout", "Logout", "Login", new { area = "" }, new { @class = "nav-link nav-link-custom logout" })
                         </li>
+
                     }
                     else
                     {
                         <li class="nav-item">
                             @Html.ActionLink("Login", "Login", "Login", new { area = "" }, new { @class = "nav-link" })
+                        </li>
+                        <li class="nav-item">
+                            @Html.ActionLink("Register", "Create", "Customer", new { area = "" }, new { @class = "nav-link" })
                         </li>
                     }
                 </ul>
@@ -163,6 +171,7 @@
 
     @*@Scripts.Render("~/bundles/jquery")*@
     @Scripts.Render("~/bundles/bootstrap")
+    
     @RenderSection("scripts", required: false)
 </body>
 </html>

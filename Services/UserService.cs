@@ -14,7 +14,7 @@ namespace BankingProjectMVC.Services
         {
             _userRepository = userRepository;
         }
-        public string Add(User user)
+        public User Add(User user)
         {
             return _userRepository.Add(user);
         }

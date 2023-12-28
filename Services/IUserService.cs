@@ -9,7 +9,7 @@ namespace BankingProjectMVC.Services
 {
     public interface IUserService
     {
-        string Add(User user);
+        User Add(User user);
         string Update(User user);
         string Delete(User user);
         User GetById(int userId);

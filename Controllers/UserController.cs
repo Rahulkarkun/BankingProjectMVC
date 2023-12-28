@@ -4,6 +4,8 @@ using BankingProjectMVC.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 
@@ -79,6 +81,89 @@ namespace BankingProjectMVC.Controllers
                 _userService.Delete(user);
             }
             return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public ActionResult ChangePassword()
+        {
+            //var userData = _userService.GetById(id);
+            //var userDataVM = _userAssembler.ConvertToViewModel(userData);
+            return View();
+        }
+        [HttpPost]
+        public ActionResult ChangePassword(UserVM userVM, string confirmNewPassword)
+        {
+            ModelState.Remove("Username");
+            ModelState.Remove("RoleId");
+            if (ModelState.IsValid)
+            {
+                if (userVM.Password != confirmNewPassword)
+                {
+                    return Json(new { success = false, message = "New Password and Confirm Password not matching." });
+                }
+
+                userVM.Password = HashPassword(confirmNewPassword);
+
+                // Ensure that Session["UserId"] is set correctly
+                if (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out int userId))
+                {
+                    userVM.Id = userId;
+
+                    // Get the user from the service
+                    var user = _userService.GetById(userId);
+
+                    if (user != null)
+                    {
+                        // Update the user's password
+                        user.Password = userVM.Password;
+
+                        // Ensure that your Update method persists changes to the database
+                        _userService.Update(user);
+
+                        return Json(new { success = true, message = "Password Changed Successfully." });
+                    }
+                }
+
+                return Json(new { success = false, message = "User not found or Session ID is not set." });
+            }
+            return View();
+        }
+
+
+        private bool VerifyPassword(string enteredPassword, string hashedPassword)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                // ComputeHash - returns byte array, convert it to a string
+                byte[] enteredPasswordBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(enteredPassword));
+
+                // Convert byte array to a string
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < enteredPasswordBytes.Length; i++)
+                {
+                    builder.Append(enteredPasswordBytes[i].ToString("x2"));
+                }
+
+                return builder.ToString() == hashedPassword;
+            }
+        }
+
+        private string HashPassword(string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                // ComputeHash - returns byte array, convert it to a string
+                byte[] hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+                // Convert byte array to a string
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < hashedBytes.Length; i++)
+                {
+                    builder.Append(hashedBytes[i].ToString("x2"));
+                }
+
+                return builder.ToString();
+            }
         }
     }
 }

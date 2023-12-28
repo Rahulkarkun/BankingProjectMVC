@@ -6,6 +6,19 @@
 
 
 
+@*@{
+        if (ViewBag.Message != null)
+        {
+            <script>
+                Swal.fire({
+                    title: "Invalid!",
+                    text: "@ViewBag.Message",
+                    icon: "error"
+                });
+            </script>
+        }
+    }*@
+
 @{
     if (ViewBag.Message != null)
     {
@@ -17,6 +30,7 @@
             });
         </script>
     }
+
 }
 
 <style>
@@ -67,7 +81,11 @@
     }
 </style>
 
+
+
 <div class="container-login">
+
+
     <h2 class="text-center">Login</h2>
 
     @using (Html.BeginForm())

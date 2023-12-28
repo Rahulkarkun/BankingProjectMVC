@@ -14,6 +14,7 @@ namespace BankingProjectMVC.Repository
         string Delete(Account account);
         Account GetById(int accountId);
         List<Account> GetAll();
+        Account GetByAccountNumber(string accNo);
 
     }
 }

@@ -86,5 +86,23 @@ namespace BankingProjectMVC.Repository
         }
 
 
+        public Account GetByAccountNumber(string accNo)
+        {
+            Account account = new Account();
+            using (var session = NHibernateHelper.OpenSession())
+            {
+                using (var txn = session.BeginTransaction())
+                {
+                    account = session.Query<Account>().Where(a => a.AccountNo == accNo).Fetch(x => x.Transactions)
+                        .Fetch(x => x.AccountType).Fetch(x => x.Customer)
+                        .Where(x => x.Status == true).FirstOrDefault();
+                    txn.Commit();
+
+                }
+            }
+            return account;
+        }
+
+
     }
 }

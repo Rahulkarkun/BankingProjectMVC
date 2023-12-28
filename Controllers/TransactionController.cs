@@ -1,4 +1,6 @@
 ﻿using BankingProjectMVC.Assemblers;
+using BankingProjectMVC.Exceptions;
+using BankingProjectMVC.Models;
 using BankingProjectMVC.Services;
 using BankingProjectMVC.ViewModels;
 using OfficeOpenXml;
@@ -34,18 +36,44 @@ namespace BankingProjectMVC.Controllers
         {
             return View();
         }
+        //[HttpPost]
+        //public ActionResult Create(TransactionVM transactionVM)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+        //        var newTransaction = _transactionService.Add(transaction);
+        //        ViewBag.Message = "Added Successfully";
+        //        return View();
+        //    }
+        //    return View(transactionVM);
+        //}
+
         [HttpPost]
         public ActionResult Create(TransactionVM transactionVM)
         {
-            if (ModelState.IsValid)
+
+            if (transactionVM.TransactionType == "Debit")
             {
-                var transaction = _transactionAssembler.ConvertToModel(transactionVM);
-                var newTransaction = _transactionService.Add(transaction);
-                ViewBag.Message = "Added Successfully";
-                return View();
+                transactionVM.ToAccountNumber = null;
+                Withdraw(transactionVM);
+                return RedirectToAction("CustomerDashboard", "Customer");
             }
-            return View(transactionVM);
+            else if (transactionVM.TransactionType == "Credit")
+            {
+                transactionVM.FromAccountNumber = null;
+                Deposit(transactionVM);
+                return RedirectToAction("CustomerDashboard", "Customer");
+            }
+            else if (transactionVM.TransactionType == "Transfer")
+            {
+                Withdraw(transactionVM);
+                Deposit(transactionVM);
+                return RedirectToAction("CustomerDashboard", "Customer");
+            }
+            return Json(new { success = false, message = "Error Occured" });
         }
+
         //[HttpGet]
         //public ActionResult Edit(int id)
         //{
@@ -104,125 +132,56 @@ namespace BankingProjectMVC.Controllers
         [HttpGet]
         public JsonResult GetData(int page, int rows, string sidx, string sord, string searchString)
         {
-            var transactions = _transactionService.GetAll();
-
-            // Check if the user is in the "Admin" role
-            if (User.IsInRole("Admin"))
+            List<Transaction> customers = null;
+            int tempData = (int)Session["LoginId"];
+            if (User.IsInRole("Customer"))
             {
-                // Apply search filter if searchString is not empty
-                if (!string.IsNullOrWhiteSpace(searchString))
-                {
-                    int searchId;
-                    if (int.TryParse(searchString, out searchId))
-                    {
-                        // If the search term is a valid integer, search by Id
-                        transactions = transactions
-                            .Where(e => e.Id == searchId)
-                            .ToList();
-                    }
-                    else
-                    {
-                        // If the search term is not an integer, search by other fields
-                        transactions = transactions
-                            .Where(e => e.TransactionType.Contains(searchString) ||
-                                        e.Amount.ToString().Contains(searchString) ||
-                                        e.Date.ToString().Contains(searchString) ||
-                                        e.ToAccountNumber.Contains(searchString) ||
-                                        e.FromAccountNumber.Contains(searchString))
-                            .ToList();
-                    }
-                }
-
-                // Get total count of records (for pagination)
-                int totalCount = transactions.Count();
-
-                // Calculate total pages
-                int totalPages = (int)Math.Ceiling((double)totalCount / rows);
-
-                var jsonData = new
-                {
-                    total = totalPages,
-                    page,
-                    records = totalCount,
-                    rows = (from transaction in transactions
-                            orderby sidx + " " + sord
-                            select new
-                            {
-                                cell = new string[]
-                                {
-                            transaction.Id.ToString(),
-                            transaction.TransactionType,
-                            transaction.Amount.ToString(),
-                            transaction.Date.ToString(),
-                            transaction.ToAccountNumber,
-                            transaction.FromAccountNumber,
-                                }
-                            }).Skip((page - 1) * rows).Take(rows).ToArray()
-                };
-
-                return Json(jsonData, JsonRequestBehavior.AllowGet);
+                customers = _transactionService.GetAllByCustFilter(tempData);
             }
-            else if (User.IsInRole("Customer"))
+            else
             {
-                int customerID;
-                if (Session["LoginId"] != null && int.TryParse(Session["LoginId"].ToString(), out customerID))
+                customers = _transactionService.GetAll();
+            }
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                int searchId;
+                if (int.TryParse(searchString, out searchId))
                 {
-                    var customerTransactions = _transactionService.GetAll().Where(x => x.Account.Customer.Id == customerID).ToList();
-
-                    if (!string.IsNullOrWhiteSpace(searchString))
-                    {
-                        int searchId;
-                        if (int.TryParse(searchString, out searchId))
-                        {
-                            customerTransactions = customerTransactions.Where(e => e.Id == searchId).ToList();
-                        }
-                        else
-                        {
-                            customerTransactions = customerTransactions.Where(e =>
-                                e.TransactionType.Contains(searchString) ||
-                                e.Amount.ToString().Contains(searchString) ||
-                                e.Date.ToString().Contains(searchString) ||
-                                e.ToAccountNumber.Contains(searchString) ||
-                                e.FromAccountNumber.Contains(searchString)
-                            ).ToList();
-                        }
-                    }
-
-                    int totalCount = customerTransactions.Count();
-                    int totalPages = (int)Math.Ceiling((double)totalCount / rows);
-
-                    var jsonData = new
-                    {
-                        total = totalPages,
-                        page,
-                        records = totalCount,
-                        rows = (from transaction in customerTransactions
-                                orderby sidx + " " + sord
-                                select new
-                                {
-                                    cell = new string[]
-                                    {
-                                transaction.Id.ToString(),
-                                transaction.TransactionType,
-                                transaction.Amount.ToString(),
-                                transaction.Date.ToString(),
-                                transaction.ToAccountNumber,
-                                transaction.FromAccountNumber,
-                                    }
-                                }).Skip((page - 1) * rows).Take(rows).ToArray()
-                    };
-
-                    return Json(jsonData, JsonRequestBehavior.AllowGet);
+                    // If the search term is a valid integer, search by Id
+                    customers = customers.Where(e => e.Id == searchId || e.TransactionType.Contains(searchString)).ToList();
                 }
                 else
                 {
-                    // Unauthorized access if the session does not contain a valid customer ID
-                    return Json(new { error = "Unauthorized access" });
+                    // If the search term is not an integer, search by FirstName or LastName
+                    customers = customers.Where(e => e.TransactionType.Contains(searchString)).ToList();
                 }
             }
+            // Get total count of records (for pagination)
+            int totalCount = customers.Count();
 
-            // Default return statement or throw an exception
-            return Json(new { error = "Invalid role" });
+            // Calculate total pages
+            int totalPages = (int)Math.Ceiling((double)totalCount / rows);
+
+            var jsonData = new
+            {
+                total = totalPages,
+                page,
+                records = totalCount,
+                rows = (from customer in customers
+                        orderby sidx + " " + sord
+                        select new
+                        {
+                            cell = new string[] {
+                                        customer.Id.ToString(),
+                                        customer.TransactionType,
+                                        customer.Amount.ToString(),
+                                        customer.Date.ToString(),
+                                        customer.FromAccountNumber,
+                                        customer.ToAccountNumber,
+                                    }
+                        }).Skip((page - 1) * rows).Take(rows).ToArray()
+            };
+            return Json(jsonData, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -268,24 +227,28 @@ namespace BankingProjectMVC.Controllers
         [HttpPost]
         public ActionResult Deposit(TransactionVM transactionVM)
         {
-            // Check if FromAccountNumber is null, and set it to "SELF" if it is
-            if (string.IsNullOrEmpty(transactionVM.FromAccountNumber))
+            ModelState.Remove("FromAccountNumber");
+            ModelState.Remove("AccountId");
+            ModelState.Remove("TransactionType");
+            if (ModelState.IsValid)
             {
-                transactionVM.FromAccountNumber = "SELF";
+                //var account = _accountService.GetById(transactionVM.AccountId);
+                var account = _accountService.GetByAccountNumber(transactionVM.ToAccountNumber);
+                transactionVM.TransactionType = "Credit";
+                transactionVM.AccountId = account.Id;
+                if (account != null)
+                {
+                    account.Balance = account.Balance + transactionVM.Amount;
+                    _accountService.Update(account);
+                    var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+                    var newTransaction = _transactionService.Add(transaction);
+                    return Json(new { success = true, message = "Amount Deposited Successfully." });
+                }
+                return Json(new { success = false, message = "No such Account Found." });
             }
-
-            var account = _accountService.GetById(transactionVM.AccountId);
-            if (account != null)
-            {
-                Session["AccountId"] = account.Id;
-                account.Balance = account.Balance + transactionVM.Amount;
-                _accountService.Update(account);
-                var transaction = _transactionAssembler.ConvertToModel(transactionVM);
-                var newTransaction = _transactionService.Add(transaction);
-                return Json(new { success = true, message = "Amount Deposited Successfully." });
-            }
-            return Json(new { success = false, message = "No such Account Found." });
+            return View();
         }
+
 
 
         [HttpGet]
@@ -296,25 +259,55 @@ namespace BankingProjectMVC.Controllers
         [HttpPost]
         public ActionResult Withdraw(TransactionVM transactionVM)
         {
-            if (string.IsNullOrEmpty(transactionVM.ToAccountNumber))
+            ModelState.Remove("ToAccountNumber");
+            ModelState.Remove("AccountId");
+            ModelState.Remove("TransactionType");
+            if (ModelState.IsValid)
             {
-                transactionVM.ToAccountNumber = "SELF";
-            }
-            var account = _accountService.GetById(transactionVM.AccountId);
-            if (account != null)
-            {
-                if (account.Balance > transactionVM.Amount)
+                //transactionVM.ToAccountNumber = null;
+                //var account = _accountService.GetById(transactionVM.AccountId);
+                var account = _accountService.GetByAccountNumber(transactionVM.FromAccountNumber);
+                transactionVM.TransactionType = "Debit";
+                transactionVM.AccountId = account.Id;
+                if (account != null)
                 {
-                    account.Balance = account.Balance - transactionVM.Amount;
-                    _accountService.Update(account);
-                    var transaction = _transactionAssembler.ConvertToModel(transactionVM);
-                    var newTransaction = _transactionService.Add(transaction);
-                    return Json(new { success = true, message = "Amount Withdrawn Successfully." });
+                    if (account.Balance > transactionVM.Amount)
+                    {
+                        account.Balance = account.Balance - transactionVM.Amount;
+                        _accountService.Update(account);
+                        var transaction = _transactionAssembler.ConvertToModel(transactionVM);
+                        var newTransaction = _transactionService.Add(transaction);
+                        return Json(new { success = true, message = "Amount Withdrawn Successfully." });
+                    }
+                    return Json(new { success = false, message = "Insufficent Balance." });
                 }
-                return Json(new { success = false, message = "Insuccificent Balance." });
+                return Json(new { success = false, message = "No such Account Found." });
             }
-            return Json(new { success = false, message = "No such Account Found." });
+            return View();
 
+        }
+
+
+        [HttpGet]
+        public ActionResult Transfer()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Transfer(TransactionVM transactionVM)
+        {
+            ModelState.Remove("AccountId");
+            ModelState.Remove("TransactionType");
+            if (ModelState.IsValid)
+            {
+
+                Withdraw(transactionVM);
+                Deposit(transactionVM);
+                return Json(new { success = true, message = "Amount Transferd Successfully." });
+            }
+            return View();
+
+            
         }
 
     }

@@ -2,11 +2,8 @@
 
 @{
     ViewBag.Title = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<script src="~/Scripts/jquery-3.4.1.js"></script>
-<script src="~/Scripts/jquery.validate.js"></script>
-<script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+
 <h2>Index</h2>
 
 <p>
@@ -18,35 +15,13 @@
             @Html.DisplayNameFor(model => model.DocumentName)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.CustomerName)
+            @Html.DisplayNameFor(model => model.CustomerId)
         </th>
         <th>
             @Html.DisplayNameFor(model => model.IsVerified)
         </th>
         <th></th>
     </tr>
-
-    @*@foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DocumentName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.CustomerName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.IsVerified)
-                </td>
-                <td>
-                    @Html.ActionLink("View Document", "ViewDocument", new { id = item.Id, fileName = item.DocumentName }) |
-                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
-                    <button class="verify-button" data-id="@item.Id" data-verified="@item.IsVerified">Verify Document</button>
-                </td>
-            </tr>
-        }*@
 
     @foreach (var item in Model)
     {
@@ -55,64 +30,21 @@
                 @Html.DisplayFor(modelItem => item.DocumentName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.CustomerName)
+                @Html.DisplayFor(modelItem => item.CustomerId)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.IsVerified)
             </td>
             <td>
+                @* Uncomment this block if you want to display a PDF *@
+                @*<embed src="data:application/pdf;base64,@Convert.ToBase64String(item.DocumentFile)" type="application/pdf" width="100%" height="600px" />*@
+            </td>
+            <td>
                 @Html.ActionLink("View Document", "ViewDocument", new { id = item.Id, fileName = item.DocumentName }) |
-                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                @Html.ActionLink("Delete", "Delete", new { id = item.Id }) |
-                @if (!item.IsVerified)
-                {
-                    @Html.ActionLink("Verify", "Verify", new { id = item.Id }, new { @class = "verify-button" })
-                }
+                @Html.ActionLink("Verify", "Verify", new { id = item.Id })
+                @*@Html.ActionLink("Delete", "Delete", new { id = item.Id })*@
             </td>
         </tr>
     }
 
-
 </table>
-
-<!-- Updated Script -->
-@*<script>
-        $(document).ready(function () {
-            $('.verify-button').click(function () {
-                var id = $(this).data('id');
-                //var isVerified = $(this).data('verified');
-
-                // Send an AJAX request to update the verification status
-                $.ajax({
-                    url: '@Url.Action("VerifyDocument")',
-                    type: 'POST',
-                    data: { id: id, isVerified: true },
-                    success: function (data) {
-                        // Optionally handle the response
-                        location.reload(); // Reload the page to reflect changes
-                    },
-                    error: function (xhr, status, error) {
-                        console.error(error);
-                    }
-                });
-            });
-        });
-    </script>*@
-
-@section scripts {
-    <script>
-        $(function () {
-            $('.verify-button').click(function (e) {
-                e.preventDefault();
-                var url = $(this).attr('href');
-                $.post(url, function () {
-                    location.reload();
-                });
-            });
-        });
-    </script>
-}
-
-
-

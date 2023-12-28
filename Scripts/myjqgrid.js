@@ -30,7 +30,7 @@
         gridComplete: function () {
             $("#grid").jqGrid('navGrid', '#pager', { edit: true, add: false, del: true, refresh: true},
                 {
-                    url: '/Customer/Edit',
+                    url: '/Customer/EditByJQGrid',
                     recreateForm: true,
                     closeAfterEdit: true,
                     beforeShowForm: function (form) {
@@ -80,7 +80,7 @@
         mtype: 'GET',
         datatype: 'json',
         contentType: "application/json; charset-utf-8",
-        colNames: ['Id', 'TransactionType', 'Amount', 'Date', 'ToAccountNo', 'FromAccountNo'],
+        colNames: ['Id', 'TransactionType', 'Amount', 'Date', 'FromAccountNo', 'ToAccountNo'],
         colModel: [
             { label: 'Id', name: 'Id', key: true, search: true },
             { label: 'TransactionType', name: 'TransactionType', editable: true, search: true },

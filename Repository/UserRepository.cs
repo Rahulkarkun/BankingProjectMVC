@@ -2,6 +2,7 @@
 using BankingProjectMVC.Models;
 using BankingProjectMVC.ViewModels;
 using NHibernate.Linq;
+using NHibernate.Criterion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,10 @@ namespace BankingProjectMVC.Repository
 {
     public class UserRepository : IUserRepository
     {
-        public string Add(User user)
+        public User Add(User user)
         {
+            //NHibernateProfilerBootstrapper.PreStart();
+
             using (var session = NHibernateHelper.OpenSession())
             {
                 using (var txn = session.BeginTransaction())
@@ -22,7 +25,7 @@ namespace BankingProjectMVC.Repository
 
                 }
             }
-            return "Added Succesfully";
+            return user;
         }
         public string Update(User user)
         {

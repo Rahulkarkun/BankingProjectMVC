@@ -71,7 +71,9 @@ namespace BankingProjectMVC.Repository
             {
                 using (var txn = session.BeginTransaction())
                 {
-                    documents = session.Query<Document>().Fetch(x => x.Customer).ToList();
+                    documents = session.Query<Document>()
+                        .Fetch(x => x.Customer)
+                        .ToList();
                     txn.Commit();
                 }
             }

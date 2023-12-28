@@ -10,9 +10,13 @@ namespace BankingProjectMVC.Services
     public class TransactionService : ITransactionService
     {
         private readonly ITransactionRepository _transactionRepository;
-        public TransactionService(ITransactionRepository transactionRepository)
+        private readonly ICustomerService _customerService;
+        private readonly IAccountService _accountService;
+        public TransactionService(ITransactionRepository transactionRepository, ICustomerService customerService, IAccountService accountService)
         {
             _transactionRepository = transactionRepository;
+            _customerService = customerService;
+            _accountService = accountService;
         }
         public string Add(Transaction transaction)
         {
@@ -33,6 +37,29 @@ namespace BankingProjectMVC.Services
         public List<Transaction> GetAll()
         {
             return _transactionRepository.GetAll();
+        }
+
+        public List<Transaction> GetAllByCustFilter(int tempData)
+        {
+            var accounts = _accountService.GetAll();
+
+            accounts = accounts.Where(a => a.Customer.Id == tempData).ToList();
+
+            var transactions = _transactionRepository.GetAll();
+            List<Transaction> filteredTransaction = new List<Transaction>();
+            foreach (var account in accounts)
+            {
+                var transaction = transactions.Where(t => t.Account.Id == account.Id).ToList();
+                foreach (var tr in transaction)
+                {
+                    filteredTransaction.Add(tr);
+
+                }
+
+            }
+            return filteredTransaction;
+
+
         }
     }
 }

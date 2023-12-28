@@ -17,6 +17,16 @@ namespace BankingAppMVC.Controllers
     {
         private readonly ICustomerService _customerService;
         private readonly CustomerAssembler _customerAssembler;
+        private UserAssembler _userAssembler;
+        private IUserService _userService;
+
+        public CustomerController(ICustomerService customerService, CustomerAssembler customerAssembler, IUserService userService, UserAssembler userAssembler)
+        {
+            _customerService = customerService;
+            _customerAssembler = customerAssembler;
+            _userService = userService;
+            _userAssembler = userAssembler;
+        }
         // GET: Customer
         //public ActionResult Index()
         //{
@@ -72,7 +82,16 @@ namespace BankingAppMVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                var userVM = new UserVM()
+                {
+                    Username = customerVM.Username,
+                    Password = customerVM.Password,
+                    RoleId = 2
+                };
+                customerVM.Status = true;
+                var newUser = _userAssembler.ConvertToModel(userVM);
                 var customer = _customerAssembler.ConvertToModel(customerVM);
+                customer.User = _userService.Add(newUser);
                 var newCustomer = _customerService.Add(customer);
                 ViewBag.Message = "Added Successfully";
                 return View();
@@ -196,7 +215,7 @@ namespace BankingAppMVC.Controllers
                                         customer.LastName,
                                         customer.ContactNo.ToString(),
                                         customer.Email,
-                                        customer.User.Id.ToString(),
+                                        customer.User.Username.ToString(),
                                         customer.Status.ToString(),
                                         customer.Accounts.Count.ToString(),
                                         customer.Documents.Count.ToString(),
@@ -210,27 +229,78 @@ namespace BankingAppMVC.Controllers
 
         }
 
-        [HttpPost]
-        public ActionResult Edit(Customer customer)
+        //[HttpPost]
+        //public ActionResult Edit(Customer customer)
+        //{
+        //    //using (var session = NHibernateHelper.OpenSession())
+        //    //{
+        //    //    using (var txn = session.BeginTransaction())
+        //    //    {
+        //            var existingCustomer = _customerService.GetById(customer.Id);
+        //            if (existingCustomer != null)
+        //            {
+        //                existingCustomer.FirstName = customer.FirstName;
+        //                existingCustomer.LastName = customer.LastName;
+        //                existingCustomer.Email = customer.Email;
+        //                existingCustomer.Accounts = customer.Accounts;
+        //                _customerService.Update(existingCustomer);
+        //        //session.Update(existingCustomer);
+        //        //txn.Commit();
+        //        return Json(new { success = true, message = "User updated successfully." });
+        //    }
+        //    //return RedirectToAction("Index");
+
+        //    return Json(new { success = false, message = "No such User Exists" });
+        //}
+
+        [HttpGet]
+        public ActionResult Edit()
         {
-            //using (var session = NHibernateHelper.OpenSession())
-            //{
-            //    using (var txn = session.BeginTransaction())
-            //    {
-                    var existingCustomer = _customerService.GetById(customer.Id);
-                    if (existingCustomer != null)
-                    {
-                        existingCustomer.FirstName = customer.FirstName;
-                        existingCustomer.LastName = customer.LastName;
-                        existingCustomer.Email = customer.Email;
-                        existingCustomer.Accounts = customer.Accounts;
-                        _customerService.Update(existingCustomer);
-                //session.Update(existingCustomer);
-                //txn.Commit();
+            int id = (int)Session["LoginId"];
+            var custData = _customerService.GetById(id);
+            var custDataVM = _customerAssembler.ConvertToViewModel(custData);
+            return View(custDataVM);
+        }
+
+        [HttpPost]
+        public ActionResult Edit(CustomerVM customerVM)
+        {
+            ModelState.Remove("UserId");
+            ModelState.Remove("Username");
+            ModelState.Remove("Password");
+            if (ModelState.IsValid)
+            {
+                var existingCustomer = _customerService.GetById(customerVM.Id);
+                if (existingCustomer != null)
+                {
+                    customerVM.UserId = existingCustomer.User.Id;
+                    customerVM.Status = true;
+                    var updatedCust = _customerAssembler.ConvertToModel(customerVM);
+                    _customerService.Update(updatedCust);
+
+                    return Json(new { success = true, message = "User updated successfully." });
+                }
+                return Json(new { success = false, message = "No such User Exists" });
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult EditByJQGrid(Customer customer)
+        {
+
+            var existingCustomer = _customerService.GetById(customer.Id);
+            if (existingCustomer != null)
+            {
+                existingCustomer.FirstName = customer.FirstName;
+                existingCustomer.LastName = customer.LastName;
+                existingCustomer.Email = customer.Email;
+                existingCustomer.ContactNo = customer.ContactNo;
+                existingCustomer.Accounts = customer.Accounts;
+                _customerService.Update(existingCustomer);
+
                 return Json(new { success = true, message = "User updated successfully." });
             }
-            //return RedirectToAction("Index");
-
             return Json(new { success = false, message = "No such User Exists" });
         }
 
